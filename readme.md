@@ -8,7 +8,7 @@ Using YOLOv2 (You Only Look Once) for object detection and a custom simulation e
 
 Traditional traffic lights follow fixed timers, causing unnecessary delays during low traffic and major congestion during peak hours.
 
-### Urban Pulse solves this problem by:
+### Urban Pulse solves this problem by :
 
 * Detecting vehicles using YOLOv2
 
@@ -36,6 +36,7 @@ This ensures faster movement, shorter waiting times, and efficient junction mana
 ---
 ### 🚧 Project Status: Ongoing  
 Urban Pulse is actively being improved and expanded. More features, optimizations, and real-world enhancements will be added in upcoming updates.
+
 
 
 

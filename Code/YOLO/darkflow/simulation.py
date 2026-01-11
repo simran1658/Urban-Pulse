@@ -14,6 +14,8 @@ import threading
 import pygame
 import sys
 import os
+from vehicle_detection import detectVehicles
+
 
 # options={
 #    'model':'./cfg/yolo.cfg',     #specifying the path of model
@@ -277,51 +279,97 @@ def initialize():
     repeat()
 
 # Set time according to formula
+# def setTime():
+#     global noOfCars, noOfBikes, noOfBuses, noOfTrucks, noOfRickshaws, noOfLanes
+#     global carTime, busTime, truckTime, rickshawTime, bikeTime
+#     os.system("say detecting vehicles, "+directionNumbers[(currentGreen+1)%noOfSignals])
+# #    detection_result=detection(currentGreen,tfnet)
+# #    greenTime = math.ceil(((noOfCars*carTime) + (noOfRickshaws*rickshawTime) + (noOfBuses*busTime) + (noOfBikes*bikeTime))/(noOfLanes+1))
+# #    if(greenTime<defaultMinimum):
+# #       greenTime = defaultMinimum
+# #    elif(greenTime>defaultMaximum):
+# #       greenTime = defaultMaximum
+#     # greenTime = len(vehicles[currentGreen][0])+len(vehicles[currentGreen][1])+len(vehicles[currentGreen][2])
+#     # noOfVehicles = len(vehicles[directionNumbers[nextGreen]][1])+len(vehicles[directionNumbers[nextGreen]][2])-vehicles[directionNumbers[nextGreen]]['crossed']
+#     # print("no. of vehicles = ",noOfVehicles)
+#     noOfCars, noOfBuses, noOfTrucks, noOfRickshaws, noOfBikes = 0,0,0,0,0
+#     for j in range(len(vehicles[directionNumbers[nextGreen]][0])):
+#         vehicle = vehicles[directionNumbers[nextGreen]][0][j]
+#         if(vehicle.crossed==0):
+#             vclass = vehicle.vehicleClass
+#             # print(vclass)
+#             noOfBikes += 1
+#     for i in range(1,3):
+#         for j in range(len(vehicles[directionNumbers[nextGreen]][i])):
+#             vehicle = vehicles[directionNumbers[nextGreen]][i][j]
+#             if(vehicle.crossed==0):
+#                 vclass = vehicle.vehicleClass
+#                 # print(vclass)
+#                 if(vclass=='car'):
+#                     noOfCars += 1
+#                 elif(vclass=='bus'):
+#                     noOfBuses += 1
+#                 elif(vclass=='truck'):
+#                     noOfTrucks += 1
+#                 elif(vclass=='rickshaw'):
+#                     noOfRickshaws += 1
+#     # print(noOfCars)
+#     greenTime = math.ceil(((noOfCars*carTime) + (noOfRickshaws*rickshawTime) + (noOfBuses*busTime) + (noOfTrucks*truckTime)+ (noOfBikes*bikeTime))/(noOfLanes+1))
+#     # greenTime = math.ceil((noOfVehicles)/noOfLanes) 
+#     print('Green Time: ',greenTime)
+#     if(greenTime<defaultMinimum):
+#         greenTime = defaultMinimum
+#     elif(greenTime>defaultMaximum):
+#         greenTime = defaultMaximum
+#     # greenTime = random.randint(15,50)
+#     signals[(currentGreen+1)%(noOfSignals)].green = greenTime
+   
 def setTime():
     global noOfCars, noOfBikes, noOfBuses, noOfTrucks, noOfRickshaws, noOfLanes
     global carTime, busTime, truckTime, rickshawTime, bikeTime
-    os.system("say detecting vehicles, "+directionNumbers[(currentGreen+1)%noOfSignals])
-#    detection_result=detection(currentGreen,tfnet)
-#    greenTime = math.ceil(((noOfCars*carTime) + (noOfRickshaws*rickshawTime) + (noOfBuses*busTime) + (noOfBikes*bikeTime))/(noOfLanes+1))
-#    if(greenTime<defaultMinimum):
-#       greenTime = defaultMinimum
-#    elif(greenTime>defaultMaximum):
-#       greenTime = defaultMaximum
-    # greenTime = len(vehicles[currentGreen][0])+len(vehicles[currentGreen][1])+len(vehicles[currentGreen][2])
-    # noOfVehicles = len(vehicles[directionNumbers[nextGreen]][1])+len(vehicles[directionNumbers[nextGreen]][2])-vehicles[directionNumbers[nextGreen]]['crossed']
-    # print("no. of vehicles = ",noOfVehicles)
-    noOfCars, noOfBuses, noOfTrucks, noOfRickshaws, noOfBikes = 0,0,0,0,0
-    for j in range(len(vehicles[directionNumbers[nextGreen]][0])):
-        vehicle = vehicles[directionNumbers[nextGreen]][0][j]
-        if(vehicle.crossed==0):
-            vclass = vehicle.vehicleClass
-            # print(vclass)
-            noOfBikes += 1
-    for i in range(1,3):
-        for j in range(len(vehicles[directionNumbers[nextGreen]][i])):
-            vehicle = vehicles[directionNumbers[nextGreen]][i][j]
-            if(vehicle.crossed==0):
-                vclass = vehicle.vehicleClass
-                # print(vclass)
-                if(vclass=='car'):
-                    noOfCars += 1
-                elif(vclass=='bus'):
-                    noOfBuses += 1
-                elif(vclass=='truck'):
-                    noOfTrucks += 1
-                elif(vclass=='rickshaw'):
-                    noOfRickshaws += 1
-    # print(noOfCars)
-    greenTime = math.ceil(((noOfCars*carTime) + (noOfRickshaws*rickshawTime) + (noOfBuses*busTime) + (noOfTrucks*truckTime)+ (noOfBikes*bikeTime))/(noOfLanes+1))
-    # greenTime = math.ceil((noOfVehicles)/noOfLanes) 
-    print('Green Time: ',greenTime)
-    if(greenTime<defaultMinimum):
+
+    # 1️⃣ Decide which lane image YOLO must process
+    next_direction = directionNumbers[nextGreen]   # right / down / left / up
+    filename = next_direction + ".jpg"             # Example: "right.jpg"
+
+    print("\n🔍 Running YOLO on:", filename)
+
+    # 2️⃣ Call YOLO detection
+    try:
+        counts = detectVehicles(filename)
+    except:
+        print("⚠ YOLO detection failed, using simulation counts instead")
+        counts = {"car":0, "bus":0, "truck":0, "rickshaw":0, "bike":0}
+
+    # 3️⃣ Assign YOLO counts
+    noOfCars = counts["car"]
+    noOfBuses = counts["bus"]
+    noOfTrucks = counts["truck"]
+    noOfRickshaws = counts["rickshaw"]
+    noOfBikes = counts["bike"]
+
+    print("🚗 YOLO Count:", counts)
+
+    # 4️⃣ Calculate green time
+    greenTime = math.ceil(
+        (noOfCars*carTime +
+         noOfRickshaws*rickshawTime +
+         noOfBuses*busTime +
+         noOfTrucks*truckTime +
+         noOfBikes*bikeTime) / (noOfLanes + 1)
+    )
+
+    # 5️⃣ Limit green time between min/max
+    if greenTime < defaultMinimum:
         greenTime = defaultMinimum
-    elif(greenTime>defaultMaximum):
+    elif greenTime > defaultMaximum:
         greenTime = defaultMaximum
-    # greenTime = random.randint(15,50)
-    signals[(currentGreen+1)%(noOfSignals)].green = greenTime
-   
+
+    print("🟢 Final Green Time for next lane:", next_direction, "=", greenTime, "sec")
+
+    # 6️⃣ Assign the calculated green time
+    signals[(currentGreen+1)%noOfSignals].green = greenTime
+
 def repeat():
     global currentGreen, currentYellow, nextGreen
     while(signals[currentGreen].green>0):   # while the timer of current green signal is not zero
